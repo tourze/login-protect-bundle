@@ -4,6 +4,8 @@ services:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
+  Tourze\LoginProtectBundle\EventSubscriber\:
+    resource: '../../EventSubscriber/'
   Tourze\LoginProtectBundle\Repository\:
     resource: '../../Repository/'
   Tourze\LoginProtectBundle\Service\:
