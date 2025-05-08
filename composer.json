@@ -27,7 +27,6 @@
     "tourze/doctrine-ip-bundle": "0.0.*",
     "tourze/doctrine-snowflake-bundle": "0.1.*",
     "tourze/doctrine-timestamp-bundle": "0.0.*",
-    "tourze/easy-admin-attribute": "0.1.*",
     "tourze/symfony-schedule-entity-clean-bundle": "0.1.*"
   },
   "require-dev": {
