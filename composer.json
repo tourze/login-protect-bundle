@@ -27,7 +27,8 @@
     "tourze/doctrine-snowflake-bundle": "0.1.*",
     "tourze/symfony-schedule-entity-clean-bundle": "0.1.*",
     "tourze/easy-admin-attribute": "0.1.*",
-    "psr/log": "^3|^2|^1"
+    "psr/log": "^3|^2|^1",
+    "doctrine/orm": "^3.0"
   },
   "require-dev": {
     "phpunit/phpunit": "^10.0",
