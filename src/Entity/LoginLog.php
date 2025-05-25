@@ -34,13 +34,6 @@ class LoginLog
     private ?string $id = null;
 
     #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]
-    private ?\DateTimeInterface $createTime = null;
-
-    #[IndexColumn]
     #[ORM\Column(length: 120, options: ['comment' => '唯一标志'])]
     private ?string $identifier = null;
 
@@ -59,6 +52,13 @@ class LoginLog
     #[CreateIpColumn]
     #[ORM\Column(length: 45, nullable: true, options: ['comment' => '创建时IP'])]
     private ?string $createdFromIp = null;
+
+    #[IndexColumn]
+    #[ListColumn(order: 98, sorter: true)]
+    #[ExportColumn]
+    #[CreateTimeColumn]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    private ?\DateTimeInterface $createTime = null;
 
     public function getId(): ?string
     {
