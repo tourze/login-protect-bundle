@@ -4,13 +4,13 @@ namespace Tourze\LoginProtectBundle\Service;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Tourze\DoctrineAsyncInsertBundle\Service\AsyncInsertService;
+use Tourze\DoctrineAsyncInsertBundle\Service\AsyncInsertService as DoctrineService;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
 
 class LoginService
 {
     public function __construct(
-        private readonly AsyncInsertService $doctrineService,
+        private readonly DoctrineService $doctrineService,
         private readonly LoggerInterface $logger,
     ) {
     }

@@ -7,7 +7,7 @@ use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
-use Tourze\DoctrineAsyncInsertBundle\DoctrineAsyncInsertBundle;
+use Tourze\DoctrineAsyncBundle\DoctrineAsyncBundle;
 use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
 use Tourze\DoctrineIpBundle\DoctrineIpBundle;
 use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
@@ -25,7 +25,7 @@ class IntegrationTestKernel extends BaseKernel
         yield new DoctrineBundle();
         yield new SnowflakeBundle();
         yield new DoctrineSnowflakeBundle();
-        yield new DoctrineAsyncInsertBundle();
+        yield new DoctrineAsyncBundle();
         yield new DoctrineIndexedBundle();
         yield new DoctrineIpBundle();
         yield new DoctrineTimestampBundle();
