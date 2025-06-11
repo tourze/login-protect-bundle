@@ -4,7 +4,7 @@ namespace Tourze\LoginProtectBundle\Tests\Integration;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Tourze\DoctrineAsyncBundle\Service\DoctrineService;
+use Tourze\DoctrineAsyncInsertBundle\Service\AsyncInsertService;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
 use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
 use Tourze\LoginProtectBundle\Service\LoginService;
@@ -37,7 +37,7 @@ class LoginProtectIntegrationTest extends KernelTestCase
         // 验证核心服务存在于容器中
         $this->assertNotNull($container->get(LoginService::class));
         $this->assertNotNull($container->get(LoginLogRepository::class));
-        $this->assertNotNull($container->get(DoctrineService::class));
+        $this->assertNotNull($container->get(AsyncInsertService::class));
 
         // 验证服务类型
         $this->assertInstanceOf(LoginService::class, $container->get(LoginService::class));
@@ -92,7 +92,7 @@ class LoginProtectIntegrationTest extends KernelTestCase
         $loginService->saveLoginLog('test-user', 'login', 'service-test-session');
 
         // 执行异步操作，确保数据被保存
-        $doctrineService = $container->get(DoctrineService::class);
+        $doctrineService = $container->get(AsyncInsertService::class);
         $doctrineService->executeAsyncInserts();
 
         // 查询数据库验证

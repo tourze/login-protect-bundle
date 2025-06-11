@@ -6,19 +6,19 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Tourze\DoctrineAsyncBundle\Service\DoctrineService;
+use Tourze\DoctrineAsyncInsertBundle\Service\AsyncInsertService;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
 use Tourze\LoginProtectBundle\Service\LoginService;
 
 class LoginServiceTest extends TestCase
 {
-    private DoctrineService|MockObject $doctrineService;
+    private AsyncInsertService|MockObject $doctrineService;
     private LoggerInterface|MockObject $logger;
     private LoginService $loginService;
 
     protected function setUp(): void
     {
-        $this->doctrineService = $this->createMock(DoctrineService::class);
+        $this->doctrineService = $this->createMock(AsyncInsertService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->loginService = new LoginService($this->doctrineService, $this->logger);
     }
