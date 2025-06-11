@@ -24,6 +24,7 @@
     "symfony/security-http": "^6.4",
     "symfony/yaml": "^6.4 || ^7.1",
     "tourze/doctrine-async-bundle": "0.1.*",
+    "tourze/doctrine-direct-insert-bundle": "0.0.*",
     "tourze/doctrine-indexed-bundle": "0.0.*",
     "tourze/doctrine-ip-bundle": "0.0.*",
     "tourze/doctrine-snowflake-bundle": "0.1.*",

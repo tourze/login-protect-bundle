@@ -11,7 +11,7 @@ use Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken;
 use Symfony\Component\Security\Http\Event\LoginFailureEvent;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
-use Tourze\DoctrineAsyncBundle\Service\DoctrineService;
+use Tourze\DoctrineDirectInsertBundle\Service\DirectInsertService;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
 use Tourze\LoginProtectBundle\Service\LoginService;
 
@@ -22,7 +22,7 @@ class LoginLogSubscriber
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly DoctrineService $doctrineService,
+        private readonly DirectInsertService $directInsertService,
         private readonly LoginService $loginService,
     ) {
     }
@@ -68,7 +68,7 @@ class LoginLogSubscriber
         }
 
         try {
-            $this->doctrineService->directInsert($log);
+            $this->directInsertService->directInsert($log);
         } catch (\Throwable $exception) {
             $this->logger->error('记录登录日志失败', [
                 'exception' => $exception,
