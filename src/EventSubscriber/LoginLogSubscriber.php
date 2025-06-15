@@ -64,7 +64,7 @@ class LoginLogSubscriber
         // 普通用户登录失败 5 次后，须自动锁定此账户，锁定时长建议至少为 30 分钟。
         $e = $event->getException();
         if ($e instanceof TooManyLoginAttemptsAuthenticationException) {
-            $log->setUnlockTime(Carbon::now()->addMinutes($_ENV['LOGIN_ATTEMPT_FAIL_LOCK_MINUTE'] ?? 30));
+            $log->setUnlockTime(Carbon::now()->addMinutes((int) ($_ENV['LOGIN_ATTEMPT_FAIL_LOCK_MINUTE'] ?? 30)));
         }
 
         try {
