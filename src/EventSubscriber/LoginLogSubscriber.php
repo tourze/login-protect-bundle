@@ -53,7 +53,7 @@ class LoginLogSubscriber
 
         $identifier = '';
         $passport = $event->getPassport();
-        if ($passport) {
+        if ($passport !== null) {
             $identifier = $passport->getBadge(UserBadge::class)?->getUserIdentifier();
         }
         $log->setIdentifier($identifier);
@@ -82,7 +82,7 @@ class LoginLogSubscriber
     #[AsEventListener]
     public function onLogout(LogoutEvent $event): void
     {
-        if (!$event->getToken()?->getUser()) {
+        if ($event->getToken()?->getUser() === null) {
             return;
         }
         $this->loginService->saveLoginLog($event->getToken()->getUser(), 'logout');

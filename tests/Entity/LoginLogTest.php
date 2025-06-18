@@ -15,7 +15,7 @@ class LoginLogTest extends TestCase
         $loginLog = new LoginLog();
 
         // 测试 CreateTime
-        $createTime = new \DateTime();
+        $createTime = new \DateTimeImmutable();
         $loginLog->setCreateTime($createTime);
         $this->assertSame($createTime, $loginLog->getCreateTime());
 
@@ -30,7 +30,7 @@ class LoginLogTest extends TestCase
         $this->assertSame($action, $loginLog->getAction());
 
         // 测试 UnlockTime
-        $unlockTime = new \DateTime('+30 minutes');
+        $unlockTime = new \DateTimeImmutable('+30 minutes');
         $loginLog->setUnlockTime($unlockTime);
         $this->assertSame($unlockTime, $loginLog->getUnlockTime());
 
@@ -71,7 +71,7 @@ class LoginLogTest extends TestCase
         $this->assertInstanceOf(LoginLog::class, $loginLog->setIdentifier('test'));
         $this->assertInstanceOf(LoginLog::class, $loginLog->setAction('login'));
         $this->assertInstanceOf(LoginLog::class, $loginLog->setSessionId('session'));
-        $this->assertInstanceOf(LoginLog::class, $loginLog->setCreateTime(new \DateTime()));
-        $this->assertInstanceOf(LoginLog::class, $loginLog->setUnlockTime(new \DateTime()));
+        $this->assertInstanceOf(LoginLog::class, $loginLog->setCreateTime(new \DateTimeImmutable()));
+        $this->assertInstanceOf(LoginLog::class, $loginLog->setUnlockTime(new \DateTimeImmutable()));
     }
 }

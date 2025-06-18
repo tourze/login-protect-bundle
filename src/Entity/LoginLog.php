@@ -17,7 +17,7 @@ use Tourze\ScheduleEntityCleanBundle\Attribute\AsScheduleClean;
 #[AsScheduleClean(expression: '22 2 * * *', defaultKeepDay: 120, keepDayEnv: 'LOGIN_LOG_PERSIST_DAY_NUM')]
 #[ORM\Entity(repositoryClass: LoginLogRepository::class, readOnly: true)]
 #[ORM\Table(name: 'login_attempt', options: ['comment' => '登录日志'])]
-class LoginLog
+class LoginLog implements \Stringable
 {
     use CreateTimeAware;
 
@@ -35,8 +35,8 @@ class LoginLog
     #[ORM\Column(length: 20, options: ['comment' => '登录结果'])]
     private ?string $action = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '解锁时间'])]
-    private ?\DateTimeInterface $unlockTime = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '解锁时间'])]
+    private ?\DateTimeImmutable $unlockTime = null;
 
     #[IndexColumn]
     #[ORM\Column(length: 100, options: ['comment' => '会话ID', 'default' => ''])]
@@ -75,14 +75,14 @@ class LoginLog
         return $this;
     }
 
-    public function getUnlockTime(): ?\DateTimeInterface
+    public function getUnlockTime(): ?\DateTimeImmutable
     {
         return $this->unlockTime;
     }
 
     public function setUnlockTime(?\DateTimeInterface $unlockTime): self
     {
-        $this->unlockTime = $unlockTime;
+        $this->unlockTime = $unlockTime instanceof \DateTimeImmutable ? $unlockTime : ($unlockTime !== null ? \DateTimeImmutable::createFromInterface($unlockTime) : null);
 
         return $this;
     }
@@ -107,5 +107,10 @@ class LoginLog
     public function setCreatedFromIp(?string $createdFromIp): void
     {
         $this->createdFromIp = $createdFromIp;
+    }
+    
+    public function __toString(): string
+    {
+        return sprintf('LoginLog #%s - %s (%s)', $this->id ?? 'new', $this->identifier ?? 'unknown', $this->action ?? 'unknown');
     }
 }

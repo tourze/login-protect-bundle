@@ -2,7 +2,7 @@
 
 namespace Tourze\LoginProtectBundle\Tests\Repository;
 
-use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -229,8 +229,8 @@ class LoginLogRepositoryTest extends KernelTestCase
 
     public function test_findOneBy_withOrderBy_returnsOrderedResult(): void
     {
-        $createTime1 = new DateTime('2023-01-01 10:00:00');
-        $createTime2 = new DateTime('2023-01-01 12:00:00');
+        $createTime1 = new DateTimeImmutable('2023-01-01 10:00:00');
+        $createTime2 = new DateTimeImmutable('2023-01-01 12:00:00');
         
         $log1 = $this->createTestLoginLog(['identifier' => 'user@example.com', 'createTime' => $createTime1]);
         $log2 = $this->createTestLoginLog(['identifier' => 'user@example.com', 'createTime' => $createTime2]);
@@ -317,7 +317,7 @@ class LoginLogRepositoryTest extends KernelTestCase
 
     public function test_unlockTime_persistenceWorksCorrectly(): void
     {
-        $unlockTime = new DateTime('+30 minutes');
+        $unlockTime = new DateTimeImmutable('+30 minutes');
         $log = $this->createTestLoginLog(['unlockTime' => $unlockTime]);
 
         $this->entityManager->persist($log);

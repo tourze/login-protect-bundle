@@ -27,7 +27,7 @@ class LoginCheckSubscriber
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-        if ($lastLog && $lastLog->getUnlockTime() && Carbon::now()->lessThan($lastLog->getUnlockTime())) {
+        if ($lastLog !== null && $lastLog->getUnlockTime() !== null && Carbon::now()->lessThan($lastLog->getUnlockTime())) {
             throw new LockedAuthenticationException('登录次数过多，请稍后重试');
         }
     }
