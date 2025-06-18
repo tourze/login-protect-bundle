@@ -134,8 +134,6 @@ class LockedAuthenticationExceptionTest extends TestCase
         $exception = new LockedAuthenticationException('Test');
 
         $trace = $exception->getTrace();
-
-        $this->assertIsArray($trace);
         $this->assertNotEmpty($trace);
     }
 

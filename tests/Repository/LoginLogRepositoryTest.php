@@ -99,8 +99,6 @@ class LoginLogRepositoryTest extends KernelTestCase
     public function test_findAll_withNoData_returnsEmptyArray(): void
     {
         $result = $this->repository->findAll();
-
-        $this->assertIsArray($result);
         $this->assertCount(0, $result);
     }
 

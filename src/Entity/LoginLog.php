@@ -8,10 +8,6 @@ use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
 use Tourze\ScheduleEntityCleanBundle\Attribute\AsScheduleClean;
 
@@ -19,14 +15,10 @@ use Tourze\ScheduleEntityCleanBundle\Attribute\AsScheduleClean;
  * 登录日志比较重要，所以单独记录到数据库，方便后续审计
  */
 #[AsScheduleClean(expression: '22 2 * * *', defaultKeepDay: 120, keepDayEnv: 'LOGIN_LOG_PERSIST_DAY_NUM')]
-#[AsPermission(title: '登录日志')]
-#[Deletable]
 #[ORM\Entity(repositoryClass: LoginLogRepository::class, readOnly: true)]
 #[ORM\Table(name: 'login_attempt', options: ['comment' => '登录日志'])]
 class LoginLog
 {
-    #[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
@@ -48,14 +40,11 @@ class LoginLog
     #[ORM\Column(length: 100, options: ['comment' => '会话ID', 'default' => ''])]
     private string $sessionId = '';
 
-    #[ListColumn(order: 99)]
     #[CreateIpColumn]
     #[ORM\Column(length: 45, nullable: true, options: ['comment' => '创建时IP'])]
     private ?string $createdFromIp = null;
 
     #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
     #[CreateTimeColumn]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?\DateTimeInterface $createTime = null;
