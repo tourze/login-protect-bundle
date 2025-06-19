@@ -2,7 +2,7 @@
 
 namespace Tourze\LoginProtectBundle\Tests\EventSubscriber;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
@@ -104,7 +104,7 @@ class LoginCheckSubscriberTest extends TestCase
         $lastLog = new LoginLog();
         $lastLog->setIdentifier('user@example.com');
         $lastLog->setAction('failure');
-        $lastLog->setUnlockTime(Carbon::now()->addMinutes(30));
+        $lastLog->setUnlockTime(CarbonImmutable::now()->addMinutes(30));
 
         // 设置期望
         $event->expects($this->once())
@@ -169,7 +169,7 @@ class LoginCheckSubscriberTest extends TestCase
         $lastLog = new LoginLog();
         $lastLog->setIdentifier('user@example.com');
         $lastLog->setAction('failure');
-        $lastLog->setUnlockTime(Carbon::now()->subMinutes(5)); // 5分钟前解锁
+        $lastLog->setUnlockTime(CarbonImmutable::now()->subMinutes(5)); // 5分钟前解锁
 
         // 设置期望
         $event->expects($this->once())

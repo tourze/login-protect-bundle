@@ -2,7 +2,7 @@
 
 namespace Tourze\LoginProtectBundle\EventSubscriber;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
@@ -27,7 +27,7 @@ class LoginCheckSubscriber
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-        if ($lastLog !== null && $lastLog->getUnlockTime() !== null && Carbon::now()->lessThan($lastLog->getUnlockTime())) {
+        if ($lastLog !== null && $lastLog->getUnlockTime() !== null && CarbonImmutable::now()->lessThan($lastLog->getUnlockTime())) {
             throw new LockedAuthenticationException('登录次数过多，请稍后重试');
         }
     }
