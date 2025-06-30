@@ -31,10 +31,6 @@ class LoginLogSubscriberTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;
     private LoginLogSubscriber $subscriber;
-    private LoginLogRepository $repository;
-    private LoginService $loginService;
-    private AsyncInsertService $asyncInsertService;
-    private DirectInsertService $directInsertService;
 
     protected static function createKernel(array $options = []): KernelInterface
     {
@@ -190,7 +186,7 @@ class LoginLogSubscriberTest extends KernelTestCase
     public function test_onLoginFailure_withTooManyAttempts_createsFailureLogWithUnlockTime(): void
     {
         $passport = $this->createMockPassport($this->createMockUser('toomany@example.com'));
-        $exception = new TooManyLoginAttemptsAuthenticationException(5, 'Too many attempts');
+        $exception = new TooManyLoginAttemptsAuthenticationException(5);
 
         $event = new LoginFailureEvent(
             $exception,
@@ -212,7 +208,7 @@ class LoginLogSubscriberTest extends KernelTestCase
         $_ENV['LOGIN_ATTEMPT_FAIL_LOCK_MINUTE'] = '60';
 
         $passport = $this->createMockPassport($this->createMockUser('envtest@example.com'));
-        $exception = new TooManyLoginAttemptsAuthenticationException(5, 'Too many attempts');
+        $exception = new TooManyLoginAttemptsAuthenticationException(5);
 
         $event = new LoginFailureEvent(
             $exception,
@@ -335,7 +331,7 @@ class LoginLogSubscriberTest extends KernelTestCase
         $this->assertCount(3, $parameters);
 
         $parameterTypes = array_map(
-            fn($param) => $param->getType()->getName(),
+            fn($param) => $param->getType() instanceof \ReflectionNamedType ? $param->getType()->getName() : (string) $param->getType(),
             $parameters
         );
 
@@ -411,10 +407,6 @@ class LoginLogSubscriberTest extends KernelTestCase
         self::bootKernel();
         $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
         $this->subscriber = static::getContainer()->get(LoginLogSubscriber::class);
-        $this->repository = static::getContainer()->get(LoginLogRepository::class);
-        $this->loginService = static::getContainer()->get(LoginService::class);
-        $this->asyncInsertService = static::getContainer()->get(AsyncInsertService::class);
-        $this->directInsertService = static::getContainer()->get(DirectInsertService::class);
         $this->cleanDatabase();
     }
 

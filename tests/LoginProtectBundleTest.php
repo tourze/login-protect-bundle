@@ -81,10 +81,10 @@ class LoginProtectBundleTest extends TestCase
 
     public function test_bundle_implementsCorrectMethods(): void
     {
-        $this->assertTrue(method_exists($this->bundle, 'getPath'));
-        $this->assertTrue(method_exists($this->bundle, 'getName'));
-        $this->assertTrue(method_exists($this->bundle, 'getNamespace'));
-        $this->assertTrue(method_exists($this->bundle, 'getContainerExtension'));
+        $this->assertNotEmpty($this->bundle->getPath());
+        $this->assertNotEmpty($this->bundle->getName());
+        $this->assertNotEmpty($this->bundle->getNamespace());
+        $this->assertNotNull($this->bundle->getContainerExtension());
     }
 
     public function test_bundle_canBeInstantiatedMultipleTimes(): void

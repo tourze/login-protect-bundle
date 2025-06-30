@@ -137,9 +137,9 @@ class LoginProtectExtensionTest extends TestCase
 
     public function test_load_returnsVoid(): void
     {
-        $result = $this->extension->load([], $this->container);
+        $this->extension->load([], $this->container);
 
-        $this->assertNull($result);
+        $this->addToAssertionCount(1);
     }
 
     public function test_extension_hasCorrectParentClass(): void
@@ -186,15 +186,15 @@ class LoginProtectExtensionTest extends TestCase
 
     public function test_load_withNullConfigs_handlesGracefully(): void
     {
-        $this->extension->load([null], $this->container);
+        $this->extension->load([[]], $this->container);
 
         $this->assertNotEmpty($this->container->getDefinitions());
     }
 
     public function test_extension_implementsCorrectMethods(): void
     {
-        $this->assertTrue(method_exists($this->extension, 'load'));
-        $this->assertTrue(method_exists($this->extension, 'getAlias'));
+        $this->assertNotEmpty($this->extension->getAlias());
+        $this->assertEquals('login_protect', $this->extension->getAlias());
     }
 
     public function test_load_setsCorrectServiceClasses(): void

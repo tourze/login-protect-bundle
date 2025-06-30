@@ -20,7 +20,6 @@ class LoginServiceTest extends KernelTestCase
     private EntityManagerInterface $entityManager;
     private LoginService $loginService;
     private AsyncInsertService $asyncInsertService;
-    private LoginLogRepository $repository;
 
     protected static function createKernel(array $options = []): KernelInterface
     {
@@ -41,7 +40,6 @@ class LoginServiceTest extends KernelTestCase
         $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
         $this->loginService = static::getContainer()->get(LoginService::class);
         $this->asyncInsertService = static::getContainer()->get(AsyncInsertService::class);
-        $this->repository = static::getContainer()->get(LoginLogRepository::class);
         $this->cleanDatabase();
     }
 
@@ -176,7 +174,7 @@ class LoginServiceTest extends KernelTestCase
         $this->assertCount(2, $parameters);
         
         $parameterTypes = array_map(
-            fn($param) => $param->getType()->getName(),
+            fn($param) => $param->getType() instanceof \ReflectionNamedType ? $param->getType()->getName() : (string) $param->getType(),
             $parameters
         );
         

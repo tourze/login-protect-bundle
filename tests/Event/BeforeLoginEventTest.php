@@ -118,9 +118,8 @@ class BeforeLoginEventTest extends TestCase
         $retrievedUser = $event->getUser();
 
         $this->assertInstanceOf(UserInterface::class, $retrievedUser);
-        $this->assertTrue(method_exists($retrievedUser, 'getUserIdentifier'));
-        $this->assertTrue(method_exists($retrievedUser, 'getRoles'));
-        $this->assertTrue(method_exists($retrievedUser, 'eraseCredentials'));
+        $this->assertNotEmpty($retrievedUser->getUserIdentifier());
+        $this->assertContains('ROLE_USER', $retrievedUser->getRoles());
     }
 
     public function test_setUser_withComplexUser_preservesAllProperties(): void
