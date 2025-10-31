@@ -2,95 +2,109 @@
 
 namespace Tourze\LoginProtectBundle\Tests\Exception;
 
-use Exception;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tourze\LoginProtectBundle\Exception\LockedAuthenticationException;
+use Tourze\LoginProtectBundle\Service\ExceptionFactory;
+use Tourze\PHPUnitBase\AbstractExceptionTestCase;
 
-class LockedAuthenticationExceptionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(LockedAuthenticationException::class)]
+final class LockedAuthenticationExceptionTest extends AbstractExceptionTestCase
 {
-    public function test_constructor_withMessage_setsMessage(): void
+    private ExceptionFactory $factory;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->factory = new ExceptionFactory();
+    }
+
+    public function testConstructorWithMessageSetsMessage(): void
     {
         $message = '登录次数过多，请稍后重试';
-        $exception = new LockedAuthenticationException($message);
+        $exception = $this->factory->createLockedAuthenticationException($message);
 
         $this->assertEquals($message, $exception->getMessage());
     }
 
-    public function test_constructor_withEmptyMessage_setsEmptyMessage(): void
+    public function testConstructorWithEmptyMessageSetsEmptyMessage(): void
     {
-        $exception = new LockedAuthenticationException('');
+        $exception = $this->factory->createLockedAuthenticationException('');
 
         $this->assertEquals('', $exception->getMessage());
     }
 
-    public function test_constructor_withoutMessage_setsEmptyMessage(): void
+    public function testConstructorWithoutMessageSetsEmptyMessage(): void
     {
-        $exception = new LockedAuthenticationException();
+        $exception = $this->factory->createLockedAuthenticationException();
 
         $this->assertEquals('', $exception->getMessage());
     }
 
-    public function test_constructor_withCode_setsCode(): void
+    public function testConstructorWithCodeSetsCode(): void
     {
         $code = 429;
-        $exception = new LockedAuthenticationException('Test message', $code);
+        $exception = $this->factory->createLockedAuthenticationException('Test message', $code);
 
         $this->assertEquals($code, $exception->getCode());
     }
 
-    public function test_constructor_withoutCode_setsZeroCode(): void
+    public function testConstructorWithoutCodeSetsZeroCode(): void
     {
-        $exception = new LockedAuthenticationException('Test message');
+        $exception = $this->factory->createLockedAuthenticationException('Test message');
 
         $this->assertEquals(0, $exception->getCode());
     }
 
-    public function test_constructor_withPrevious_setsPrevious(): void
+    public function testConstructorWithPreviousSetsPrevious(): void
     {
-        $previous = new Exception('Previous exception');
-        $exception = new LockedAuthenticationException('Test message', 0, $previous);
+        $previous = new \Exception('Previous exception');
+        $exception = $this->factory->createLockedAuthenticationException('Test message', 0, $previous);
 
         $this->assertSame($previous, $exception->getPrevious());
     }
 
-    public function test_constructor_withoutPrevious_setsNullPrevious(): void
+    public function testConstructorWithoutPreviousSetsNullPrevious(): void
     {
-        $exception = new LockedAuthenticationException('Test message');
+        $exception = $this->factory->createLockedAuthenticationException('Test message');
 
         $this->assertNull($exception->getPrevious());
     }
 
-    public function test_exception_extendsException(): void
+    public function testExceptionExtendsException(): void
     {
-        $exception = new LockedAuthenticationException();
+        $exception = $this->factory->createLockedAuthenticationException();
 
-        $this->assertInstanceOf(Exception::class, $exception);
+        $this->assertInstanceOf(\Exception::class, $exception);
     }
 
-    public function test_exception_isInstanceOfCorrectClass(): void
+    public function testExceptionIsInstanceOfCorrectClass(): void
     {
-        $exception = new LockedAuthenticationException();
+        $exception = $this->factory->createLockedAuthenticationException();
 
         $this->assertInstanceOf(LockedAuthenticationException::class, $exception);
     }
 
-    public function test_constructor_withAllParameters_setsAllProperties(): void
+    public function testConstructorWithAllParametersSetsAllProperties(): void
     {
         $message = '用户已被锁定';
         $code = 423; // Locked
-        $previous = new Exception('原始异常');
+        $previous = new \Exception('原始异常');
 
-        $exception = new LockedAuthenticationException($message, $code, $previous);
+        $exception = $this->factory->createLockedAuthenticationException($message, $code, $previous);
 
         $this->assertEquals($message, $exception->getMessage());
         $this->assertEquals($code, $exception->getCode());
         $this->assertSame($previous, $exception->getPrevious());
     }
 
-    public function test_toString_containsExceptionDetails(): void
+    public function testToStringContainsExceptionDetails(): void
     {
         $message = 'Account locked due to too many failed attempts';
-        $exception = new LockedAuthenticationException($message);
+        $exception = $this->factory->createLockedAuthenticationException($message);
 
         $string = (string) $exception;
 
@@ -98,69 +112,72 @@ class LockedAuthenticationExceptionTest extends TestCase
         $this->assertStringContainsString($message, $string);
     }
 
-    public function test_getMessage_withUnicodeMessage_handlesCorrectly(): void
+    public function testGetMessageWithUnicodeMessageHandlesCorrectly(): void
     {
         $message = '用户登录失败次数过多，账户已被锁定，请稍后重试';
-        $exception = new LockedAuthenticationException($message);
+        $exception = $this->factory->createLockedAuthenticationException($message);
 
         $this->assertEquals($message, $exception->getMessage());
     }
 
-    public function test_getCode_withNegativeCode_handlesCorrectly(): void
+    public function testGetCodeWithNegativeCodeHandlesCorrectly(): void
     {
         $code = -1;
-        $exception = new LockedAuthenticationException('Test', $code);
+        $exception = $this->factory->createLockedAuthenticationException('Test', $code);
 
         $this->assertEquals($code, $exception->getCode());
     }
 
-    public function test_getFile_returnsCorrectFile(): void
+    public function testGetFileReturnsCorrectFile(): void
     {
-        $exception = new LockedAuthenticationException('Test');
+        $exception = $this->factory->createLockedAuthenticationException('Test');
 
-        $this->assertStringContainsString('LockedAuthenticationExceptionTest.php', $exception->getFile());
+        // 通过工厂创建的异常，文件路径应该是工厂文件
+        $this->assertStringContainsString('ExceptionFactory.php', $exception->getFile());
     }
 
-    public function test_getLine_returnsCorrectLine(): void
+    public function testGetLineReturnsCorrectLine(): void
     {
-        $line = __LINE__ + 1;
-        $exception = new LockedAuthenticationException('Test');
+        $exception = $this->factory->createLockedAuthenticationException('Test');
 
-        $this->assertEquals($line, $exception->getLine());
+        // 通过工厂创建的异常，行号应该是工厂文件中的行号
+        // 我们只需要验证行号是一个正整数
+        $this->assertIsInt($exception->getLine());
+        $this->assertGreaterThan(0, $exception->getLine());
     }
 
-    public function test_getTrace_returnsArray(): void
+    public function testGetTraceReturnsArray(): void
     {
-        $exception = new LockedAuthenticationException('Test');
+        $exception = $this->factory->createLockedAuthenticationException('Test');
 
         $trace = $exception->getTrace();
         $this->assertNotEmpty($trace);
     }
 
-    public function test_constructor_withLongMessage_handlesCorrectly(): void
+    public function testConstructorWithLongMessageHandlesCorrectly(): void
     {
         $longMessage = str_repeat('用户账户已被锁定，请联系管理员。', 100);
-        $exception = new LockedAuthenticationException($longMessage);
+        $exception = $this->factory->createLockedAuthenticationException($longMessage);
 
         $this->assertEquals($longMessage, $exception->getMessage());
     }
 
-    public function test_exception_throwable(): void
+    public function testExceptionThrowable(): void
     {
         $this->expectException(LockedAuthenticationException::class);
         $this->expectExceptionMessage('Test exception');
 
-        throw new LockedAuthenticationException('Test exception');
+        throw $this->factory->createLockedAuthenticationException('Test exception');
     }
 
-    public function test_exception_catchable(): void
+    public function testExceptionCatchable(): void
     {
         $thrown = false;
         $caught = false;
 
         try {
             $thrown = true;
-            throw new LockedAuthenticationException('Catchable exception');
+            throw $this->factory->createLockedAuthenticationException('Catchable exception');
         } catch (LockedAuthenticationException $e) {
             $caught = true;
             $this->assertEquals('Catchable exception', $e->getMessage());

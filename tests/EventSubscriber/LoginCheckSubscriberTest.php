@@ -3,34 +3,59 @@
 namespace Tourze\LoginProtectBundle\Tests\EventSubscriber;
 
 use Carbon\CarbonImmutable;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
 use Tourze\LoginProtectBundle\Event\BeforeLoginEvent;
 use Tourze\LoginProtectBundle\EventSubscriber\LoginCheckSubscriber;
 use Tourze\LoginProtectBundle\Exception\LockedAuthenticationException;
 use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractEventSubscriberTestCase;
 
-class LoginCheckSubscriberTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(LoginCheckSubscriber::class)]
+#[RunTestsInSeparateProcesses]
+final class LoginCheckSubscriberTest extends AbstractEventSubscriberTestCase
 {
     private LoginCheckSubscriber $subscriber;
+
     private LoginLogRepository|MockObject $loginLogRepository;
 
-    protected function setUp(): void
+    protected static function getEventSubscriberClass(): string
     {
+        return LoginCheckSubscriber::class;
+    }
+
+    protected function onSetUp(): void
+    {
+        // 通过容器设置 mock 的 LoginLogRepository
         $this->loginLogRepository = $this->createMock(LoginLogRepository::class);
-        $this->subscriber = new LoginCheckSubscriber($this->loginLogRepository);
+        self::getContainer()->set(LoginLogRepository::class, $this->loginLogRepository);
+    }
+
+    private function getSubscriber(): LoginCheckSubscriber
+    {
+        if (!isset($this->subscriber)) {
+            $this->subscriber = self::getService(LoginCheckSubscriber::class);
+        }
+
+        return $this->subscriber;
     }
 
     /**
      * 测试非锁定用户的登录检查
      */
-    public function testCheckLoginTime_withNonLockedUser(): void
+    public function testCheckLoginTimeWithNonLockedUser(): void
     {
+        // 初始化 subscriber 和 mock repository
+        $this->getSubscriber();
+
         // 创建模拟对象
         $event = $this->createMock(BeforeLoginEvent::class);
         $user = $this->createMock(UserInterface::class);
@@ -45,55 +70,67 @@ class LoginCheckSubscriberTest extends TestCase
         // 设置期望
         $event->expects($this->once())
             ->method('getUser')
-            ->willReturn($user);
+            ->willReturn($user)
+        ;
 
         $user->expects($this->once())
             ->method('getUserIdentifier')
-            ->willReturn('user@example.com');
+            ->willReturn('user@example.com')
+        ;
 
         $this->loginLogRepository->expects($this->once())
             ->method('createQueryBuilder')
             ->with('a')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('where')
             ->with('a.identifier = :identifier')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setParameter')
             ->with('identifier', 'user@example.com')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('orderBy')
-            ->with('a.id', Criteria::DESC)
-            ->willReturn($queryBuilder);
+            ->with('a.id', 'DESC')
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setMaxResults')
             ->with(1)
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('getQuery')
-            ->willReturn($query);
+            ->willReturn($query)
+        ;
 
         $query->expects($this->once())
             ->method('getOneOrNullResult')
-            ->willReturn($lastLog);
+            ->willReturn($lastLog)
+        ;
 
         // 执行测试 - 应该没有异常抛出
-        $this->subscriber->checkLoginTime($event);
+        $this->getSubscriber()->checkLoginTime($event);
         // 测试通过，因为没有异常
     }
 
     /**
      * 测试锁定用户的登录检查
      */
-    public function testCheckLoginTime_withLockedUser(): void
+    public function testCheckLoginTimeWithLockedUser(): void
     {
+        // 初始化 subscriber 和 mock repository
+        $this->getSubscriber();
+
         // 创建模拟对象
         $event = $this->createMock(BeforeLoginEvent::class);
         $user = $this->createMock(UserInterface::class);
@@ -109,56 +146,68 @@ class LoginCheckSubscriberTest extends TestCase
         // 设置期望
         $event->expects($this->once())
             ->method('getUser')
-            ->willReturn($user);
+            ->willReturn($user)
+        ;
 
         $user->expects($this->once())
             ->method('getUserIdentifier')
-            ->willReturn('user@example.com');
+            ->willReturn('user@example.com')
+        ;
 
         $this->loginLogRepository->expects($this->once())
             ->method('createQueryBuilder')
             ->with('a')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('where')
             ->with('a.identifier = :identifier')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setParameter')
             ->with('identifier', 'user@example.com')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('orderBy')
-            ->with('a.id', Criteria::DESC)
-            ->willReturn($queryBuilder);
+            ->with('a.id', 'DESC')
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setMaxResults')
             ->with(1)
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('getQuery')
-            ->willReturn($query);
+            ->willReturn($query)
+        ;
 
         $query->expects($this->once())
             ->method('getOneOrNullResult')
-            ->willReturn($lastLog);
+            ->willReturn($lastLog)
+        ;
 
         // 执行测试 - 应该抛出 LockedAuthenticationException
         $this->expectException(LockedAuthenticationException::class);
         $this->expectExceptionMessage('登录次数过多，请稍后重试');
-        $this->subscriber->checkLoginTime($event);
+        $this->getSubscriber()->checkLoginTime($event);
     }
 
     /**
      * 测试锁定已过期的用户登录检查
      */
-    public function testCheckLoginTime_withExpiredLock(): void
+    public function testCheckLoginTimeWithExpiredLock(): void
     {
+        // 初始化 subscriber 和 mock repository
+        $this->getSubscriber();
+
         // 创建模拟对象
         $event = $this->createMock(BeforeLoginEvent::class);
         $user = $this->createMock(UserInterface::class);
@@ -174,55 +223,67 @@ class LoginCheckSubscriberTest extends TestCase
         // 设置期望
         $event->expects($this->once())
             ->method('getUser')
-            ->willReturn($user);
+            ->willReturn($user)
+        ;
 
         $user->expects($this->once())
             ->method('getUserIdentifier')
-            ->willReturn('user@example.com');
+            ->willReturn('user@example.com')
+        ;
 
         $this->loginLogRepository->expects($this->once())
             ->method('createQueryBuilder')
             ->with('a')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('where')
             ->with('a.identifier = :identifier')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setParameter')
             ->with('identifier', 'user@example.com')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('orderBy')
-            ->with('a.id', Criteria::DESC)
-            ->willReturn($queryBuilder);
+            ->with('a.id', 'DESC')
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setMaxResults')
             ->with(1)
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('getQuery')
-            ->willReturn($query);
+            ->willReturn($query)
+        ;
 
         $query->expects($this->once())
             ->method('getOneOrNullResult')
-            ->willReturn($lastLog);
+            ->willReturn($lastLog)
+        ;
 
         // 执行测试 - 不应抛出异常，因为锁定已过期
-        $this->subscriber->checkLoginTime($event);
+        $this->getSubscriber()->checkLoginTime($event);
         // 测试通过，因为没有异常
     }
 
     /**
      * 测试没有登录记录的用户登录检查
      */
-    public function testCheckLoginTime_withNoLoginRecord(): void
+    public function testCheckLoginTimeWithNoLoginRecord(): void
     {
+        // 初始化 subscriber 和 mock repository
+        $this->getSubscriber();
+
         // 创建模拟对象
         $event = $this->createMock(BeforeLoginEvent::class);
         $user = $this->createMock(UserInterface::class);
@@ -232,47 +293,56 @@ class LoginCheckSubscriberTest extends TestCase
         // 设置期望
         $event->expects($this->once())
             ->method('getUser')
-            ->willReturn($user);
+            ->willReturn($user)
+        ;
 
         $user->expects($this->once())
             ->method('getUserIdentifier')
-            ->willReturn('user@example.com');
+            ->willReturn('user@example.com')
+        ;
 
         $this->loginLogRepository->expects($this->once())
             ->method('createQueryBuilder')
             ->with('a')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('where')
             ->with('a.identifier = :identifier')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setParameter')
             ->with('identifier', 'user@example.com')
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('orderBy')
-            ->with('a.id', Criteria::DESC)
-            ->willReturn($queryBuilder);
+            ->with('a.id', 'DESC')
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('setMaxResults')
             ->with(1)
-            ->willReturn($queryBuilder);
+            ->willReturn($queryBuilder)
+        ;
 
         $queryBuilder->expects($this->once())
             ->method('getQuery')
-            ->willReturn($query);
+            ->willReturn($query)
+        ;
 
         $query->expects($this->once())
             ->method('getOneOrNullResult')
-            ->willReturn(null);
+            ->willReturn(null)
+        ;
 
         // 执行测试 - 没有登录记录，不应抛出异常
-        $this->subscriber->checkLoginTime($event);
+        $this->getSubscriber()->checkLoginTime($event);
         // 测试通过，因为没有异常
     }
 }

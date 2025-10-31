@@ -4,8 +4,9 @@ namespace Tourze\LoginProtectBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
-use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
+use Tourze\DoctrineIpBundle\Traits\CreatedFromIpAware;
 use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\CreateTimeAware;
 use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
@@ -21,37 +22,37 @@ class LoginLog implements \Stringable
 {
     use CreateTimeAware;
     use SnowflakeKeyAware;
+    use CreatedFromIpAware;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 120)]
     #[IndexColumn]
     #[ORM\Column(length: 120, options: ['comment' => '唯一标志'])]
     private ?string $identifier = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
     #[IndexColumn]
     #[ORM\Column(length: 20, options: ['comment' => '登录结果'])]
     private ?string $action = null;
 
+    #[Assert\Type(type: \DateTimeImmutable::class)]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '解锁时间'])]
     private ?\DateTimeImmutable $unlockTime = null;
 
+    #[Assert\Length(max: 100)]
     #[IndexColumn]
     #[ORM\Column(length: 100, options: ['comment' => '会话ID', 'default' => ''])]
     private string $sessionId = '';
-
-    #[CreateIpColumn]
-    #[ORM\Column(length: 45, nullable: true, options: ['comment' => '创建时IP'])]
-    private ?string $createdFromIp = null;
-
 
     public function getIdentifier(): ?string
     {
         return $this->identifier;
     }
 
-    public function setIdentifier(string $identifier): self
+    public function setIdentifier(string $identifier): void
     {
         $this->identifier = $identifier;
-
-        return $this;
     }
 
     public function getAction(): ?string
@@ -59,11 +60,9 @@ class LoginLog implements \Stringable
         return $this->action;
     }
 
-    public function setAction(string $action): self
+    public function setAction(string $action): void
     {
         $this->action = $action;
-
-        return $this;
     }
 
     public function getUnlockTime(): ?\DateTimeImmutable
@@ -71,11 +70,9 @@ class LoginLog implements \Stringable
         return $this->unlockTime;
     }
 
-    public function setUnlockTime(?\DateTimeInterface $unlockTime): self
+    public function setUnlockTime(?\DateTimeInterface $unlockTime): void
     {
-        $this->unlockTime = $unlockTime instanceof \DateTimeImmutable ? $unlockTime : ($unlockTime !== null ? \DateTimeImmutable::createFromInterface($unlockTime) : null);
-
-        return $this;
+        $this->unlockTime = $unlockTime instanceof \DateTimeImmutable ? $unlockTime : (null !== $unlockTime ? \DateTimeImmutable::createFromInterface($unlockTime) : null);
     }
 
     public function getSessionId(): string
@@ -83,25 +80,18 @@ class LoginLog implements \Stringable
         return $this->sessionId;
     }
 
-    public function setSessionId(string $sessionId): static
+    public function setSessionId(string $sessionId): void
     {
         $this->sessionId = $sessionId;
-
-        return $this;
     }
 
-    public function getCreatedFromIp(): ?string
-    {
-        return $this->createdFromIp;
-    }
-
-    public function setCreatedFromIp(?string $createdFromIp): void
-    {
-        $this->createdFromIp = $createdFromIp;
-    }
-    
     public function __toString(): string
     {
         return sprintf('LoginLog #%s - %s (%s)', $this->id ?? 'new', $this->identifier ?? 'unknown', $this->action ?? 'unknown');
+    }
+
+    public function setCreateTime(?\DateTimeInterface $createTime): void
+    {
+        $this->createTime = $createTime instanceof \DateTimeImmutable ? $createTime : (null !== $createTime ? \DateTimeImmutable::createFromInterface($createTime) : null);
     }
 }

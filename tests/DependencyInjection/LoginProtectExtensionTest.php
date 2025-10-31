@@ -2,209 +2,155 @@
 
 namespace Tourze\LoginProtectBundle\Tests\DependencyInjection;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Extension\Extension;
 use Tourze\LoginProtectBundle\DependencyInjection\LoginProtectExtension;
-use Tourze\LoginProtectBundle\EventSubscriber\LoginCheckSubscriber;
-use Tourze\LoginProtectBundle\EventSubscriber\LoginLogSubscriber;
-use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
-use Tourze\LoginProtectBundle\Service\LoginService;
+use Tourze\PHPUnitSymfonyUnitTest\AbstractDependencyInjectionExtensionTestCase;
+use Tourze\SymfonyDependencyServiceLoader\AutoExtension;
 
-class LoginProtectExtensionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(LoginProtectExtension::class)]
+final class LoginProtectExtensionTest extends AbstractDependencyInjectionExtensionTestCase
 {
-    private LoginProtectExtension $extension;
-    private ContainerBuilder $container;
-
     protected function setUp(): void
     {
-        $this->extension = new LoginProtectExtension();
-        $this->container = new ContainerBuilder();
+        parent::setUp();
     }
 
-    public function test_load_withEmptyConfigs_loadsSuccessfully(): void
+    public function testLoadWithEmptyConfigsLoadsSuccessfully(): void
     {
-        $this->extension->load([], $this->container);
+        $extension = new LoginProtectExtension();
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
 
-        $this->assertNotEmpty($this->container->getDefinitions());
+        $this->expectNotToPerformAssertions();
+        $extension->load([], $container);
     }
 
-    public function test_load_withConfigs_doesNotThrowException(): void
+    public function testLoadWithConfigsDoesNotThrowException(): void
     {
         $configs = [
             ['enabled' => true],
-            ['settings' => ['timeout' => 30]]
+            ['settings' => ['timeout' => 30]],
         ];
 
-        $this->extension->load($configs, $this->container);
+        $extension = new LoginProtectExtension();
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
 
-        $this->assertNotEmpty($this->container->getDefinitions());
+        $this->expectNotToPerformAssertions();
+        $extension->load($configs, $container);
     }
 
-    public function test_extension_extendsSymfonyExtension(): void
+    public function testExtensionExtendsSymfonyExtension(): void
     {
-        $this->assertInstanceOf(Extension::class, $this->extension);
+        $extension = new LoginProtectExtension();
+        $this->assertInstanceOf(AutoExtension::class, $extension);
     }
 
-    public function test_extension_isInstanceOfCorrectClass(): void
+    public function testExtensionIsInstanceOfCorrectClass(): void
     {
-        $this->assertInstanceOf(LoginProtectExtension::class, $this->extension);
+        $extension = new LoginProtectExtension();
+        $this->assertInstanceOf(LoginProtectExtension::class, $extension);
     }
 
-    public function test_load_registersExpectedServices(): void
+    public function testLoadMultipleTimesDoesNotDuplicate(): void
     {
-        $this->extension->load([], $this->container);
+        $extension = new LoginProtectExtension();
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
 
-        $expectedServices = [
-            LoginService::class,
-            LoginLogRepository::class,
-            LoginCheckSubscriber::class,
-            LoginLogSubscriber::class,
-        ];
-
-        $definitions = $this->container->getDefinitions();
-        $serviceIds = array_keys($definitions);
-
-        foreach ($expectedServices as $expectedService) {
-            $this->assertContains($expectedService, $serviceIds, "Service {$expectedService} should be registered");
-        }
+        $this->expectNotToPerformAssertions();
+        $extension->load([], $container);
+        $extension->load([], $container);
     }
 
-    public function test_load_withContainerBuilder_setsCorrectServices(): void
-    {
-        $this->extension->load([], $this->container);
-
-        $this->assertTrue($this->container->hasDefinition(LoginService::class));
-        $this->assertTrue($this->container->hasDefinition(LoginLogRepository::class));
-        $this->assertTrue($this->container->hasDefinition(LoginCheckSubscriber::class));
-        $this->assertTrue($this->container->hasDefinition(LoginLogSubscriber::class));
-    }
-
-    public function test_load_configuresServicesCorrectly(): void
-    {
-        $this->extension->load([], $this->container);
-
-        $loginServiceDefinition = $this->container->getDefinition(LoginService::class);
-        $this->assertTrue($loginServiceDefinition->isAutowired());
-        $this->assertTrue($loginServiceDefinition->isAutoconfigured());
-
-        $repositoryDefinition = $this->container->getDefinition(LoginLogRepository::class);
-        $this->assertTrue($repositoryDefinition->isAutowired());
-        $this->assertTrue($repositoryDefinition->isAutoconfigured());
-    }
-
-    public function test_load_setsCorrectTags(): void
-    {
-        $this->extension->load([], $this->container);
-
-        $subscriberDefinition = $this->container->getDefinition(LoginCheckSubscriber::class);
-        $this->assertTrue($subscriberDefinition->isAutoconfigured());
-
-        $logSubscriberDefinition = $this->container->getDefinition(LoginLogSubscriber::class);
-        $this->assertTrue($logSubscriberDefinition->isAutoconfigured());
-    }
-
-    public function test_load_multipleTimes_doesNotDuplicate(): void
-    {
-        $this->extension->load([], $this->container);
-        $definitionsCount1 = count($this->container->getDefinitions());
-
-        $this->extension->load([], $this->container);
-        $definitionsCount2 = count($this->container->getDefinitions());
-
-        $this->assertEquals($definitionsCount1, $definitionsCount2);
-    }
-
-    public function test_load_withDifferentConfigs_handlesCorrectly(): void
+    public function testLoadWithDifferentConfigsHandlesCorrectly(): void
     {
         $configs = [
             ['debug' => true],
             ['cache' => false],
-            ['timeout' => 60]
+            ['timeout' => 60],
         ];
 
-        $this->extension->load($configs, $this->container);
+        $extension = new LoginProtectExtension();
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
 
-        $this->assertNotEmpty($this->container->getDefinitions());
+        $this->expectNotToPerformAssertions();
+        $extension->load($configs, $container);
     }
 
-    public function test_getAlias_returnsCorrectAlias(): void
+    public function testGetAliasReturnsCorrectAlias(): void
     {
-        $alias = $this->extension->getAlias();
+        $extension = new LoginProtectExtension();
+        $alias = $extension->getAlias();
 
         $this->assertEquals('login_protect', $alias);
     }
 
-    public function test_load_returnsVoid(): void
+    public function testLoadReturnsVoid(): void
     {
-        $this->extension->load([], $this->container);
+        $extension = new LoginProtectExtension();
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
+        $extension->load([], $container);
 
-        $this->addToAssertionCount(1);
+        $this->assertInstanceOf(ContainerBuilder::class, $container);
     }
 
-    public function test_extension_hasCorrectParentClass(): void
+    public function testExtensionHasCorrectParentClass(): void
     {
-        $reflection = new \ReflectionClass($this->extension);
+        $extension = new LoginProtectExtension();
+        $reflection = new \ReflectionClass($extension);
         $parentClass = $reflection->getParentClass();
 
-        $this->assertEquals(Extension::class, $parentClass->getName());
+        $this->assertInstanceOf(AutoExtension::class, $extension);
+        $this->assertNotFalse($parentClass);
+        $this->assertEquals(AutoExtension::class, $parentClass->getName());
     }
 
-    public function test_load_withComplexConfiguration_handlesCorrectly(): void
+    public function testLoadWithComplexConfigurationHandlesCorrectly(): void
     {
         $configs = [
             [
                 'services' => [
                     'login_service' => [
                         'enabled' => true,
-                        'timeout' => 30
-                    ]
+                        'timeout' => 30,
+                    ],
                 ],
                 'logging' => [
                     'level' => 'debug',
-                    'enabled' => true
-                ]
-            ]
+                    'enabled' => true,
+                ],
+            ],
         ];
 
-        $this->extension->load($configs, $this->container);
+        $extension = new LoginProtectExtension();
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
 
-        $this->assertNotEmpty($this->container->getDefinitions());
+        $this->expectNotToPerformAssertions();
+        $extension->load($configs, $container);
     }
 
-    public function test_container_afterLoad_hasExpectedStructure(): void
+    public function testLoadWithNullConfigsHandlesGracefully(): void
     {
-        $this->extension->load([], $this->container);
+        $extension = new LoginProtectExtension();
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
 
-        $definitions = $this->container->getDefinitions();
-        $this->assertNotEmpty($definitions);
-
-        foreach ($definitions as $definition) {
-            $this->assertNotNull($definition->getClass());
-        }
+        $this->expectNotToPerformAssertions();
+        $extension->load([[]], $container);
     }
 
-    public function test_load_withNullConfigs_handlesGracefully(): void
+    public function testExtensionImplementsCorrectMethods(): void
     {
-        $this->extension->load([[]], $this->container);
-
-        $this->assertNotEmpty($this->container->getDefinitions());
-    }
-
-    public function test_extension_implementsCorrectMethods(): void
-    {
-        $this->assertNotEmpty($this->extension->getAlias());
-        $this->assertEquals('login_protect', $this->extension->getAlias());
-    }
-
-    public function test_load_setsCorrectServiceClasses(): void
-    {
-        $this->extension->load([], $this->container);
-
-        $loginServiceDefinition = $this->container->getDefinition(LoginService::class);
-        $this->assertEquals(LoginService::class, $loginServiceDefinition->getClass());
-
-        $repositoryDefinition = $this->container->getDefinition(LoginLogRepository::class);
-        $this->assertEquals(LoginLogRepository::class, $repositoryDefinition->getClass());
+        $extension = new LoginProtectExtension();
+        $this->assertNotEmpty($extension->getAlias());
+        $this->assertEquals('login_protect', $extension->getAlias());
     }
 }

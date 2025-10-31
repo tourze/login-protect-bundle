@@ -2,46 +2,39 @@
 
 namespace Tourze\LoginProtectBundle\Tests\Event;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 use Tourze\LoginProtectBundle\Event\BeforeLoginEvent;
+use Tourze\PHPUnitSymfonyUnitTest\AbstractEventTestCase;
 
-class BeforeLoginEventTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(BeforeLoginEvent::class)]
+final class BeforeLoginEventTest extends AbstractEventTestCase
 {
-    private function createMockUser(string $identifier): UserInterface
+    protected function setUp(): void
     {
-        return new class($identifier) implements UserInterface {
-            public function __construct(private string $identifier) {}
-            
-            public function getUserIdentifier(): string
-            {
-                return $this->identifier;
-            }
-
-            public function getRoles(): array
-            {
-                return ['ROLE_USER'];
-            }
-
-            public function eraseCredentials(): void {}
-        };
+        parent::setUp();
+        // 事件测试不需要特殊设置
     }
 
-    public function test_setUser_withValidUser_setsUser(): void
+    public function testSetUserWithValidUserSetsUser(): void
     {
         $event = new BeforeLoginEvent();
-        $user = $this->createMockUser('test@example.com');
+        $user = new InMemoryUser('test@example.com', null);
 
         $event->setUser($user);
 
         $this->assertSame($user, $event->getUser());
     }
 
-    public function test_getUser_afterSettingUser_returnsSameUser(): void
+    public function testGetUserAfterSettingUserReturnsSameUser(): void
     {
         $event = new BeforeLoginEvent();
-        $user = $this->createMockUser('test@example.com');
+        $user = new InMemoryUser('test@example.com', null);
 
         $event->setUser($user);
         $retrievedUser = $event->getUser();
@@ -50,11 +43,11 @@ class BeforeLoginEventTest extends TestCase
         $this->assertEquals('test@example.com', $retrievedUser->getUserIdentifier());
     }
 
-    public function test_setUser_withDifferentUsers_updatesUser(): void
+    public function testSetUserWithDifferentUsersUpdatesUser(): void
     {
         $event = new BeforeLoginEvent();
-        $user1 = $this->createMockUser('user1@example.com');
-        $user2 = $this->createMockUser('user2@example.com');
+        $user1 = new InMemoryUser('user1@example.com', null);
+        $user2 = new InMemoryUser('user2@example.com', null);
 
         $event->setUser($user1);
         $this->assertSame($user1, $event->getUser());
@@ -64,21 +57,21 @@ class BeforeLoginEventTest extends TestCase
         $this->assertNotSame($user1, $event->getUser());
     }
 
-    public function test_event_extendsSymfonyEvent(): void
+    public function testEventExtendsSymfonyEvent(): void
     {
         $event = new BeforeLoginEvent();
 
         $this->assertInstanceOf(Event::class, $event);
     }
 
-    public function test_event_isInstanceOfBeforeLoginEvent(): void
+    public function testEventIsInstanceOfBeforeLoginEvent(): void
     {
         $event = new BeforeLoginEvent();
 
         $this->assertInstanceOf(BeforeLoginEvent::class, $event);
     }
 
-    public function test_setUser_withUserInterface_storesCorrectly(): void
+    public function testSetUserWithUserInterfaceStoresCorrectly(): void
     {
         $event = new BeforeLoginEvent();
         $user = $this->createMock(UserInterface::class);
@@ -92,13 +85,13 @@ class BeforeLoginEventTest extends TestCase
         $this->assertEquals(['ROLE_USER'], $event->getUser()->getRoles());
     }
 
-    public function test_setUser_multipleTimes_returnsLatestUser(): void
+    public function testSetUserMultipleTimesReturnsLatestUser(): void
     {
         $event = new BeforeLoginEvent();
         $users = [
-            $this->createMockUser('user1@example.com'),
-            $this->createMockUser('user2@example.com'),
-            $this->createMockUser('user3@example.com'),
+            new InMemoryUser('user1@example.com', null),
+            new InMemoryUser('user2@example.com', null),
+            new InMemoryUser('user3@example.com', null),
         ];
 
         foreach ($users as $user) {
@@ -109,24 +102,11 @@ class BeforeLoginEventTest extends TestCase
         $this->assertEquals('user3@example.com', $event->getUser()->getUserIdentifier());
     }
 
-    public function test_user_hasCorrectInterface(): void
-    {
-        $event = new BeforeLoginEvent();
-        $user = $this->createMockUser('interface@example.com');
-
-        $event->setUser($user);
-        $retrievedUser = $event->getUser();
-
-        $this->assertInstanceOf(UserInterface::class, $retrievedUser);
-        $this->assertNotEmpty($retrievedUser->getUserIdentifier());
-        $this->assertContains('ROLE_USER', $retrievedUser->getRoles());
-    }
-
-    public function test_setUser_withComplexUser_preservesAllProperties(): void
+    public function testSetUserWithComplexUserPreservesAllProperties(): void
     {
         $event = new BeforeLoginEvent();
         $user = $this->createMock(UserInterface::class);
-        
+
         $user->method('getUserIdentifier')->willReturn('complex@example.com');
         $user->method('getRoles')->willReturn(['ROLE_USER', 'ROLE_ADMIN']);
 

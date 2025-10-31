@@ -3,7 +3,7 @@
 namespace Tourze\LoginProtectBundle\EventSubscriber;
 
 use Carbon\CarbonImmutable;
-use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Order;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
 use Tourze\LoginProtectBundle\Event\BeforeLoginEvent;
@@ -19,15 +19,15 @@ class LoginCheckSubscriber
     #[AsEventListener]
     public function checkLoginTime(BeforeLoginEvent $event): void
     {
-        /** @var LoginLog $lastLog */
         $lastLog = $this->loginLogRepository->createQueryBuilder('a')
             ->where('a.identifier = :identifier')
             ->setParameter('identifier', $event->getUser()->getUserIdentifier())
-            ->orderBy('a.id', Criteria::DESC)
+            ->orderBy('a.id', Order::Descending->value)
             ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult();
-        if ($lastLog !== null && $lastLog->getUnlockTime() !== null && CarbonImmutable::now()->lessThan($lastLog->getUnlockTime())) {
+            ->getOneOrNullResult()
+        ;
+        if ($lastLog instanceof LoginLog && null !== $lastLog->getUnlockTime() && CarbonImmutable::now()->lessThan($lastLog->getUnlockTime())) {
             throw new LockedAuthenticationException('登录次数过多，请稍后重试');
         }
     }

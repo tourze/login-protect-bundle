@@ -2,76 +2,32 @@
 
 namespace Tourze\LoginProtectBundle\Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tourze\LoginProtectBundle\Entity\LoginLog;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class LoginLogTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(LoginLog::class)]
+final class LoginLogTest extends AbstractEntityTestCase
 {
-    /**
-     * 测试实体的 getter 和 setter 方法
-     */
-    public function testGetterAndSetters(): void
+    protected function createEntity(): object
     {
-        $loginLog = new LoginLog();
-
-        // 测试 CreateTime
-        $createTime = new \DateTimeImmutable();
-        $loginLog->setCreateTime($createTime);
-        $this->assertSame($createTime, $loginLog->getCreateTime());
-
-        // 测试 Identifier
-        $identifier = 'user@example.com';
-        $loginLog->setIdentifier($identifier);
-        $this->assertSame($identifier, $loginLog->getIdentifier());
-
-        // 测试 Action
-        $action = 'success';
-        $loginLog->setAction($action);
-        $this->assertSame($action, $loginLog->getAction());
-
-        // 测试 UnlockTime
-        $unlockTime = new \DateTimeImmutable('+30 minutes');
-        $loginLog->setUnlockTime($unlockTime);
-        $this->assertSame($unlockTime, $loginLog->getUnlockTime());
-
-        // 测试 SessionId
-        $sessionId = 'abc123';
-        $loginLog->setSessionId($sessionId);
-        $this->assertSame($sessionId, $loginLog->getSessionId());
-
-        // 测试 CreatedFromIp
-        $createdFromIp = '127.0.0.1';
-        $loginLog->setCreatedFromIp($createdFromIp);
-        $this->assertSame($createdFromIp, $loginLog->getCreatedFromIp());
+        return new LoginLog();
     }
 
     /**
-     * 测试实体的默认值
+     * @return iterable<string, array{string, mixed}>
      */
-    public function testDefaultValues(): void
+    public static function propertiesProvider(): iterable
     {
-        $loginLog = new LoginLog();
-
-        $this->assertNull($loginLog->getId());
-        $this->assertNull($loginLog->getCreateTime());
-        $this->assertNull($loginLog->getIdentifier());
-        $this->assertNull($loginLog->getAction());
-        $this->assertNull($loginLog->getUnlockTime());
-        $this->assertSame('', $loginLog->getSessionId());
-        $this->assertNull($loginLog->getCreatedFromIp());
-    }
-
-    /**
-     * 测试链式方法调用
-     */
-    public function testFluentInterfaces(): void
-    {
-        $loginLog = new LoginLog();
-
-        $this->assertInstanceOf(LoginLog::class, $loginLog->setIdentifier('test'));
-        $this->assertInstanceOf(LoginLog::class, $loginLog->setAction('login'));
-        $this->assertInstanceOf(LoginLog::class, $loginLog->setSessionId('session'));
-        $this->assertInstanceOf(LoginLog::class, $loginLog->setCreateTime(new \DateTimeImmutable()));
-        $this->assertInstanceOf(LoginLog::class, $loginLog->setUnlockTime(new \DateTimeImmutable()));
+        yield 'identifier' => ['identifier', 'test@example.com'];
+        yield 'action' => ['action', 'login'];
+        yield 'unlockTime' => ['unlockTime', new \DateTimeImmutable('+1 hour')];
+        yield 'sessionId' => ['sessionId', 'abc123'];
+        yield 'createdFromIp' => ['createdFromIp', '127.0.0.1'];
+        yield 'createTime' => ['createTime', new \DateTimeImmutable()];
     }
 }

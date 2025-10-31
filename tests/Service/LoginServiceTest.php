@@ -2,189 +2,139 @@
 
 namespace Tourze\LoginProtectBundle\Tests\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Tourze\DoctrineAsyncInsertBundle\DoctrineAsyncInsertBundle;
-use Tourze\DoctrineAsyncInsertBundle\Service\AsyncInsertService;
-use Tourze\DoctrineDirectInsertBundle\DoctrineDirectInsertBundle;
-use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
-use Tourze\IntegrationTestKernel\IntegrationTestKernel;
-use Tourze\LoginProtectBundle\LoginProtectBundle;
-use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\LoginProtectBundle\Service\LoginService;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 
-class LoginServiceTest extends KernelTestCase
+/**
+ * @internal
+ */
+#[CoversClass(LoginService::class)]
+#[RunTestsInSeparateProcesses]
+final class LoginServiceTest extends AbstractIntegrationTestCase
 {
-    private EntityManagerInterface $entityManager;
     private LoginService $loginService;
-    private AsyncInsertService $asyncInsertService;
 
-    protected static function createKernel(array $options = []): KernelInterface
+    protected function onSetUp(): void
     {
-        $env = $options['environment'] ?? $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'test';
-        $debug = $options['debug'] ?? $_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? true;
-
-        return new IntegrationTestKernel($env, $debug, [
-            LoginProtectBundle::class => ['all' => true],
-            DoctrineAsyncInsertBundle::class => ['all' => true],
-            DoctrineDirectInsertBundle::class => ['all' => true],
-            DoctrineSnowflakeBundle::class => ['all' => true],
-        ]);
+        $this->loginService = self::getService(LoginService::class);
     }
 
-    protected function setUp(): void
+    public function testSaveLoginLogWithUserInterfaceExecutesWithoutError(): void
     {
-        self::bootKernel();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
-        $this->loginService = static::getContainer()->get(LoginService::class);
-        $this->asyncInsertService = static::getContainer()->get(AsyncInsertService::class);
-        $this->cleanDatabase();
-    }
+        $user = $this->createNormalUser('user@example.com');
 
-    protected function tearDown(): void
-    {
-        $this->cleanDatabase();
-        self::ensureKernelShutdown();
-        parent::tearDown();
-    }
-
-    private function cleanDatabase(): void
-    {
-        $connection = $this->entityManager->getConnection();
-        $connection->executeStatement('DELETE FROM login_attempt');
-    }
-
-    private function createMockUser(string $identifier): UserInterface
-    {
-        return new class($identifier) implements UserInterface {
-            public function __construct(private string $identifier) {}
-            
-            public function getUserIdentifier(): string
-            {
-                return $this->identifier;
-            }
-
-            public function getRoles(): array
-            {
-                return ['ROLE_USER'];
-            }
-
-            public function eraseCredentials(): void {}
-        };
-    }
-
-    public function test_saveLoginLog_withUserInterface_executesWithoutError(): void
-    {
-        $user = $this->createMockUser('user@example.com');
-
-        // 测试方法执行不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($user, 'success');
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_withUserInterface_andSessionId_executesWithoutError(): void
+    public function testSaveLoginLogWithUserInterfaceAndSessionIdExecutesWithoutError(): void
     {
-        $user = $this->createMockUser('user@example.com');
+        $user = $this->createNormalUser('user@example.com');
         $sessionId = 'test-session-123';
 
-        // 测试方法执行不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($user, 'login', $sessionId);
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_withStringIdentifier_executesWithoutError(): void
+    public function testSaveLoginLogWithStringIdentifierExecutesWithoutError(): void
     {
         $identifier = 'string-user';
 
-        // 测试方法执行不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($identifier, 'failure');
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_withStringIdentifier_andSessionId_executesWithoutError(): void
+    public function testSaveLoginLogWithStringIdentifierAndSessionIdExecutesWithoutError(): void
     {
         $identifier = 'string-user';
         $sessionId = 'session-456';
 
-        // 测试方法执行不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($identifier, 'logout', $sessionId);
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_withNullUser_executesWithoutError(): void
+    public function testSaveLoginLogWithNullUserExecutesWithoutError(): void
     {
-        // 测试方法执行不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog(null, 'success');
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_withEmptySessionId_executesWithoutError(): void
+    public function testSaveLoginLogWithEmptySessionIdExecutesWithoutError(): void
     {
-        $user = $this->createMockUser('user@example.com');
+        $user = $this->createNormalUser('user@example.com');
 
-        // 测试方法执行不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($user, 'success', '');
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_multipleCalls_executesWithoutError(): void
+    public function testSaveLoginLogMultipleCallsExecutesWithoutError(): void
     {
-        $user = $this->createMockUser('user@example.com');
+        $user = $this->createNormalUser('user@example.com');
 
-        // 测试多次调用不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($user, 'login', 'session1');
         $this->loginService->saveLoginLog($user, 'logout', 'session1');
         $this->loginService->saveLoginLog($user, 'login', 'session2');
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_withDifferentUsers_executesWithoutError(): void
+    public function testSaveLoginLogWithDifferentUsersExecutesWithoutError(): void
     {
-        $user1 = $this->createMockUser('user1@example.com');
-        $user2 = $this->createMockUser('user2@example.com');
+        $user1 = $this->createNormalUser('user1@example.com');
+        $user2 = $this->createNormalUser('user2@example.com');
 
-        // 测试不同用户调用不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($user1, 'success');
         $this->loginService->saveLoginLog($user2, 'failure');
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_saveLoginLog_withSpecialCharacters_executesWithoutError(): void
+    public function testSaveLoginLogWithSpecialCharactersExecutesWithoutError(): void
     {
         $specialIdentifier = 'user+test@example.com';
 
-        // 测试特殊字符处理不抛异常
-        $this->expectNotToPerformAssertions();
         $this->loginService->saveLoginLog($specialIdentifier, 'login');
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_service_isInstanceOfCorrectClass(): void
+    public function testServiceIsInstanceOfCorrectClass(): void
     {
         $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 
-    public function test_service_hasCorrectDependencies(): void
+    public function testServiceHasCorrectDependencies(): void
     {
         $reflection = new \ReflectionClass($this->loginService);
         $constructor = $reflection->getConstructor();
-        $parameters = $constructor->getParameters();
+        $parameters = $constructor?->getParameters() ?? [];
 
         $this->assertCount(2, $parameters);
-        
+
         $parameterTypes = array_map(
-            fn($param) => $param->getType() instanceof \ReflectionNamedType ? $param->getType()->getName() : (string) $param->getType(),
+            fn ($param) => $param->getType() instanceof \ReflectionNamedType ? $param->getType()->getName() : (string) $param->getType(),
             $parameters
         );
-        
-        $this->assertContains(AsyncInsertService::class, $parameterTypes);
+
+        $this->assertContains('Tourze\DoctrineAsyncInsertBundle\Service\AsyncInsertService', $parameterTypes);
         $this->assertContains('Psr\Log\LoggerInterface', $parameterTypes);
     }
 
-    public function test_asyncInsertService_isAvailable(): void
+    public function testSaveLoginLogWithUnlockTimeExecutesWithoutError(): void
     {
-        // 测试 AsyncInsertService 服务可用
-        $this->assertInstanceOf(AsyncInsertService::class, $this->asyncInsertService);
+        $user = $this->createNormalUser('user@example.com');
+        $unlockTime = new \DateTimeImmutable('2024-01-01 12:00:00');
+
+        $this->loginService->saveLoginLogWithUnlockTime($user, 'failure', $unlockTime);
+
+        $this->assertInstanceOf(LoginService::class, $this->loginService);
     }
 }

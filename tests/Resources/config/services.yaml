@@ -1,0 +1,19 @@
+services:
+  # 为测试环境提供 AsyncInsertService 的 synthetic 定义
+  Tourze\DoctrineAsyncInsertBundle\Service\AsyncInsertService:
+    synthetic: true
+    public: true
+
+  # 为测试环境提供 LoggerInterface 的 synthetic 定义
+  Psr\Log\LoggerInterface:
+    synthetic: true
+    public: true
+
+  # 注册异常工厂服务
+  Tourze\LoginProtectBundle\Service\ExceptionFactory:
+    public: true
+
+  # 注册异常类为服务，使用工厂创建
+  Tourze\LoginProtectBundle\Exception\LockedAuthenticationException:
+    factory: ['@Tourze\LoginProtectBundle\Service\ExceptionFactory', 'createLockedAuthenticationException']
+    arguments: ['', 0, null]
