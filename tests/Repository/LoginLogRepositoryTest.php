@@ -36,20 +36,35 @@ final class LoginLogRepositoryTest extends AbstractRepositoryTestCase
     private function createTestLoginLog(array $data = []): LoginLog
     {
         $log = new LoginLog();
-        $log->setIdentifier($data['identifier'] ?? 'test-' . uniqid() . '@example.com');
-        $log->setAction($data['action'] ?? 'success');
-        $log->setSessionId($data['sessionId'] ?? 'test-session-' . uniqid());
+
+        /** @var string */
+        $identifier = $data['identifier'] ?? 'test-' . uniqid() . '@example.com';
+        $log->setIdentifier($identifier);
+
+        /** @var string */
+        $action = $data['action'] ?? 'success';
+        $log->setAction($action);
+
+        /** @var string */
+        $sessionId = $data['sessionId'] ?? 'test-session-' . uniqid();
+        $log->setSessionId($sessionId);
 
         if (isset($data['createTime'])) {
-            $log->setCreateTime($data['createTime']);
+            /** @var \DateTimeInterface|null */
+            $createTime = $data['createTime'];
+            $log->setCreateTime($createTime);
         }
 
         if (isset($data['unlockTime'])) {
-            $log->setUnlockTime($data['unlockTime']);
+            /** @var \DateTimeInterface|null */
+            $unlockTime = $data['unlockTime'];
+            $log->setUnlockTime($unlockTime);
         }
 
         if (isset($data['createdFromIp'])) {
-            $log->setCreatedFromIp($data['createdFromIp']);
+            /** @var string|null */
+            $createdFromIp = $data['createdFromIp'];
+            $log->setCreatedFromIp($createdFromIp);
         }
 
         return $log;
