@@ -11,11 +11,11 @@ use Tourze\LoginProtectBundle\Entity\LoginLog;
 
 #[Autoconfigure(public: true)]
 #[WithMonologChannel(channel: 'login_protect')]
-class LoginService
+readonly class LoginService
 {
     public function __construct(
-        private readonly DoctrineService $doctrineService,
-        private readonly LoggerInterface $logger,
+        private DoctrineService $doctrineService,
+        private LoggerInterface $logger,
     ) {
     }
 
