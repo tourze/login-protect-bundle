@@ -5,6 +5,7 @@ namespace Tourze\LoginProtectBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Tourze\BundleDependency\BundleDependencyInterface;
+use Tourze\DoctrineAsyncInsertBundle\DoctrineAsyncInsertBundle;
 use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
 use Tourze\DoctrineIpBundle\DoctrineIpBundle;
 use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
@@ -22,6 +23,7 @@ class LoginProtectBundle extends Bundle implements BundleDependencyInterface
             DoctrineIpBundle::class => ['all' => true],
             DoctrineSnowflakeBundle::class => ['all' => true],
             DoctrineTimestampBundle::class => ['all' => true],
+            DoctrineAsyncInsertBundle::class => ['all' => true],
             ScheduleEntityCleanBundle::class => ['all' => true],
             EasyAdminMenuBundle::class => ['all' => true],
         ];
