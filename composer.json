@@ -34,7 +34,7 @@
     "tourze/doctrine-timestamp-bundle": "1.1.*",
     "tourze/easy-admin-menu-bundle": "1.0.*",
     "tourze/symfony-dependency-service-loader": "1.0.*",
-    "tourze/symfony-schedule-entity-clean-bundle": "1.0.*"
+    "tourze/symfony-schedule-entity-clean-bundle": "1.1.*"
   },
   "require-dev": {
     "doctrine/doctrine-fixtures-bundle": "^4.0",
