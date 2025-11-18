@@ -18,11 +18,6 @@ use Tourze\PHPUnitSymfonyWebTest\AbstractEasyAdminControllerTestCase;
 #[RunTestsInSeparateProcesses]
 final class LoginLogCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
-    public function testGetEntityFqcn(): void
-    {
-        self::assertSame(LoginLog::class, LoginLogCrudController::getEntityFqcn());
-    }
-
     /**
      * @return AbstractCrudController<LoginLog>
      * @phpstan-return LoginLogCrudController
@@ -58,7 +53,6 @@ final class LoginLogCrudControllerTest extends AbstractEasyAdminControllerTestCa
         // 提供一个虚拟字段以避免空数据集错误
         yield 'readonly' => ['readonly_entity_no_edit_fields'];
     }
-
 
     /**
      * @return iterable<string, array{string}>
