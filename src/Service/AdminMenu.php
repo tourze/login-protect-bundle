@@ -10,7 +10,7 @@ use Tourze\LoginProtectBundle\Entity\LoginLog;
 /**
  * 登录保护菜单服务
  */
-readonly class AdminMenu implements MenuProviderInterface
+final readonly class AdminMenu implements MenuProviderInterface
 {
     public function __construct(
         private LinkGeneratorInterface $linkGenerator,

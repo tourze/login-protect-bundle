@@ -8,7 +8,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 /**
  * 登录前触发事件
  */
-class BeforeLoginEvent extends Event
+final class BeforeLoginEvent extends Event
 {
     private UserInterface $user;
 

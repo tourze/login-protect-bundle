@@ -10,7 +10,7 @@ use Tourze\LoginProtectBundle\Event\BeforeLoginEvent;
 use Tourze\LoginProtectBundle\Exception\LockedAuthenticationException;
 use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
 
-class LoginCheckSubscriber
+final class LoginCheckSubscriber
 {
     public function __construct(private readonly LoginLogRepository $loginLogRepository)
     {

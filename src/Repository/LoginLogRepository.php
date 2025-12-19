@@ -13,7 +13,7 @@ use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
  */
 #[Autoconfigure(public: true)]
 #[AsRepository(entityClass: LoginLog::class)]
-class LoginLogRepository extends ServiceEntityRepository
+final class LoginLogRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

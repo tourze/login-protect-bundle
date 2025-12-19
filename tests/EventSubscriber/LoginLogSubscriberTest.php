@@ -10,6 +10,9 @@ use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Core\Exception\TooManyLoginAttemptsAuthenticationException;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\CredentialsInterface;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
@@ -18,6 +21,7 @@ use Symfony\Component\Security\Http\Event\LoginFailureEvent;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
 use Tourze\LoginProtectBundle\EventSubscriber\LoginLogSubscriber;
+use Tourze\LoginProtectBundle\Repository\LoginLogRepository;
 use Tourze\LoginProtectBundle\Service\LoginService;
 use Tourze\PHPUnitSymfonyKernelTest\AbstractEventSubscriberTestCase;
 
@@ -29,51 +33,50 @@ use Tourze\PHPUnitSymfonyKernelTest\AbstractEventSubscriberTestCase;
 final class LoginLogSubscriberTest extends AbstractEventSubscriberTestCase
 {
     private LoginService $loginService;
-
     private LoggerInterface $logger;
-
     private LoginLogSubscriber $subscriber;
+    private LoginLogRepository $loginLogRepository;
 
     protected function onSetUp(): void
     {
-        $this->loginService = $this->createMock(LoginService::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-        // @phpstan-ignore-next-line integrationTest.noDirectInstantiationOfCoveredClass - 需要使用Mock依赖验证行为
-        $this->subscriber = new LoginLogSubscriber($this->logger, $this->loginService);
-    }
-
-    /**
-     * 创建测试用户替身
-     */
-    private function createUserStub(string $identifier = 'test@example.com'): UserInterface
-    {
-        /** @phpstan-ignore-next-line staticMethod.dynamicCall */
-        $user = $this->createStub(UserInterface::class);
-        $user->method('getUserIdentifier')->willReturn($identifier);
-        $user->method('getRoles')->willReturn(['ROLE_USER']);
-
-        return $user;
+        // 使用集成测试方法，从容器获取真实服务
+        $this->subscriber = self::getService(LoginLogSubscriber::class);
+        $this->loginService = self::getService(LoginService::class);
+        $this->logger = self::getService(LoggerInterface::class);
+        $this->loginLogRepository = self::getService(LoginLogRepository::class);
     }
 
     protected function createPassport(?string $userIdentifier = null): Passport
     {
-        $userBadge = new UserBadge($userIdentifier ?? 'test@example.com');
-        $user = $this->createUserStub($userIdentifier ?? 'test@example.com');
+        $userIdentifier = $userIdentifier ?? 'test@example.com';
+        $user = $this->createNormalUser($userIdentifier);
+        $userBadge = new UserBadge($userIdentifier, fn() => $user);
 
         $credentials = $this->createMock(CredentialsInterface::class);
         $credentials->method('isResolved')->willReturn(true);
 
         $passport = new Passport($userBadge, $credentials);
-        $userBadge->setUserLoader(fn () => $user);
 
         return $passport;
     }
 
     protected function createToken(?UserInterface $user = null): TokenInterface
     {
-        $user ??= $this->createUserStub();
+        if (null === $user) {
+            $user = $this->createNormalUser('test@example.com');
+        }
 
         return new UsernamePasswordToken($user, 'main', $user->getRoles());
+    }
+
+    protected function createAuthenticator(): AuthenticatorInterface
+    {
+        return $this->createMock(AuthenticatorInterface::class);
+    }
+
+    protected function createRequest(): Request
+    {
+        return Request::create('/login', 'POST');
     }
 
     public function testOnLoginFailureWithRegularException(): void
@@ -81,22 +84,22 @@ final class LoginLogSubscriberTest extends AbstractEventSubscriberTestCase
         $userIdentifier = 'test@example.com';
         $passport = $this->createPassport($userIdentifier);
         $exception = new BadCredentialsException('Invalid credentials');
+        $authenticator = $this->createAuthenticator();
+        $request = $this->createRequest();
+        $response = null;
+        $firewallName = 'main';
 
-        $event = $this->createMock(LoginFailureEvent::class);
-        $event->method('getPassport')->willReturn($passport);
-        $event->method('getException')->willReturn($exception);
+        $event = new LoginFailureEvent($exception, $authenticator, $request, $response, $firewallName, $passport);
 
-        $this->logger->expects($this->once())
-            ->method('debug')
-            ->with('登录失败，记录登录日志', self::anything())
-        ;
-
-        $this->loginService->expects($this->once())
-            ->method('saveLoginLogWithUnlockTime')
-            ->with($userIdentifier, 'failure', null)
-        ;
-
+        // 执行测试
         $this->subscriber->onLoginFailure($event);
+
+        // 验证登录日志已记录
+        $logs = $this->loginLogRepository->findBy(['identifier' => $userIdentifier, 'action' => 'failure']);
+        $this->assertCount(1, $logs);
+        $this->assertEquals($userIdentifier, $logs[0]->getIdentifier());
+        $this->assertEquals('failure', $logs[0]->getAction());
+        $this->assertNull($logs[0]->getUnlockTime());
     }
 
     public function testOnLoginFailureWithTooManyAttemptsException(): void
@@ -106,180 +109,218 @@ final class LoginLogSubscriberTest extends AbstractEventSubscriberTestCase
         $userIdentifier = 'test@example.com';
         $passport = $this->createPassport($userIdentifier);
         $exception = new TooManyLoginAttemptsAuthenticationException();
+        $authenticator = $this->createAuthenticator();
+        $request = $this->createRequest();
+        $response = null;
+        $firewallName = 'main';
 
-        $event = $this->createMock(LoginFailureEvent::class);
-        $event->method('getPassport')->willReturn($passport);
-        $event->method('getException')->willReturn($exception);
+        $event = new LoginFailureEvent($exception, $authenticator, $request, $response, $firewallName, $passport);
 
-        $this->loginService->expects($this->once())
-            ->method('saveLoginLogWithUnlockTime')
-            ->with(
-                $userIdentifier,
-                'failure',
-                self::isInstanceOf(\DateTimeInterface::class)
-            )
-        ;
-
+        // 执行测试
         $this->subscriber->onLoginFailure($event);
+
+        // 验证登录日志已记录且包含解锁时间
+        $logs = $this->loginLogRepository->findBy(['identifier' => $userIdentifier, 'action' => 'failure']);
+        $this->assertCount(1, $logs);
+        $this->assertEquals($userIdentifier, $logs[0]->getIdentifier());
+        $this->assertEquals('failure', $logs[0]->getAction());
+        $this->assertNotNull($logs[0]->getUnlockTime());
+        $this->assertInstanceOf(\DateTimeInterface::class, $logs[0]->getUnlockTime());
     }
 
     public function testOnLoginFailureWithNullPassport(): void
     {
         $exception = new BadCredentialsException('Invalid credentials');
+        $authenticator = $this->createAuthenticator();
+        $request = $this->createRequest();
+        $response = null;
+        $firewallName = 'main';
+        $passport = null;
 
-        $event = $this->createMock(LoginFailureEvent::class);
-        $event->method('getPassport')->willReturn(null);
-        $event->method('getException')->willReturn($exception);
+        $event = new LoginFailureEvent($exception, $authenticator, $request, $response, $firewallName, $passport);
 
-        $this->loginService->expects($this->once())
-            ->method('saveLoginLogWithUnlockTime')
-            ->with('', 'failure', null)
-        ;
-
+        // 执行测试
         $this->subscriber->onLoginFailure($event);
-    }
 
-    public function testOnLoginFailureWithServiceException(): void
-    {
-        $userIdentifier = 'test@example.com';
-        $passport = $this->createPassport($userIdentifier);
-        $exception = new BadCredentialsException('Invalid credentials');
-        $serviceException = new \RuntimeException('Database error');
-
-        $event = $this->createMock(LoginFailureEvent::class);
-        $event->method('getPassport')->willReturn($passport);
-        $event->method('getException')->willReturn($exception);
-
-        $this->loginService->expects($this->once())
-            ->method('saveLoginLogWithUnlockTime')
-            ->willThrowException($serviceException)
-        ;
-
-        $this->logger->expects($this->once())
-            ->method('error')
-            ->with('记录登录日志失败', ['exception' => $serviceException])
-        ;
-
-        $this->subscriber->onLoginFailure($event);
+        // 验证登录日志已记录（使用空字符串作为标识符）
+        $logs = $this->loginLogRepository->findBy(['identifier' => '', 'action' => 'failure']);
+        $this->assertCount(1, $logs);
+        $this->assertEquals('', $logs[0]->getIdentifier());
+        $this->assertEquals('failure', $logs[0]->getAction());
     }
 
     public function testOnLoginSuccessWithRegularToken(): void
     {
-        $user = $this->createUserStub('test@example.com');
+        $user = $this->createNormalUser('test@example.com');
         $passport = $this->createPassport('test@example.com');
         $token = $this->createToken($user);
         $firewallName = 'main';
+        $authenticator = $this->createAuthenticator();
+        $request = $this->createRequest();
+        $response = null;
+        $previousToken = null;
 
-        $event = $this->createMock(LoginSuccessEvent::class);
-        $event->method('getAuthenticatedToken')->willReturn($token);
-        $event->method('getPassport')->willReturn($passport);
-        $event->method('getFirewallName')->willReturn($firewallName);
+        $event = new LoginSuccessEvent($authenticator, $passport, $token, $request, $response, $firewallName, $previousToken);
 
-        $this->loginService->expects($this->once())
-            ->method('saveLoginLog')
-            ->with($passport->getUser(), 'success')
-        ;
-
+        // 执行测试
         $this->subscriber->onLoginSuccess($event);
+
+        // 验证登录日志已记录
+        $logs = $this->loginLogRepository->findBy(['action' => 'success']);
+        $this->assertNotEmpty($logs);
+        $foundLog = null;
+        foreach ($logs as $log) {
+            if ($log->getIdentifier() === 'test@example.com') {
+                $foundLog = $log;
+                break;
+            }
+        }
+        $this->assertNotNull($foundLog);
+        $this->assertEquals('success', $foundLog->getAction());
     }
 
     public function testOnLoginSuccessWithPostAuthenticationToken(): void
     {
-        $user = $this->createUserStub('test@example.com');
+        $user = $this->createNormalUser('test@example.com');
         $passport = $this->createPassport('test@example.com');
         $token = new PostAuthenticationToken($user, 'main', $user->getRoles());
         $firewallName = 'main';
+        $authenticator = $this->createAuthenticator();
+        $request = $this->createRequest();
+        $response = null;
+        $previousToken = null;
 
-        $event = $this->createMock(LoginSuccessEvent::class);
-        $event->method('getAuthenticatedToken')->willReturn($token);
-        $event->method('getPassport')->willReturn($passport);
-        $event->method('getFirewallName')->willReturn($firewallName);
+        $event = new LoginSuccessEvent($authenticator, $passport, $token, $request, $response, $firewallName, $previousToken);
 
-        $this->loginService->expects($this->never())
-            ->method('saveLoginLog')
-        ;
-
+        // 执行测试
         $this->subscriber->onLoginSuccess($event);
+
+        // PostAuthenticationToken 不应该记录日志
+        $logs = $this->loginLogRepository->findBy(['action' => 'success']);
+        $foundLog = null;
+        foreach ($logs as $log) {
+            if ($log->getIdentifier() === 'test@example.com') {
+                $foundLog = $log;
+                break;
+            }
+        }
+        $this->assertNull($foundLog, 'PostAuthenticationToken should not log success');
     }
 
     public function testOnLoginSuccessWithDevFirewall(): void
     {
-        $user = $this->createUserStub('test@example.com');
+        $user = $this->createNormalUser('test@example.com');
         $passport = $this->createPassport('test@example.com');
         $token = $this->createToken($user);
         $firewallName = 'dev';
+        $authenticator = $this->createAuthenticator();
+        $request = $this->createRequest();
+        $response = null;
+        $previousToken = null;
 
-        $event = $this->createMock(LoginSuccessEvent::class);
-        $event->method('getAuthenticatedToken')->willReturn($token);
-        $event->method('getPassport')->willReturn($passport);
-        $event->method('getFirewallName')->willReturn($firewallName);
+        $event = new LoginSuccessEvent($authenticator, $passport, $token, $request, $response, $firewallName, $previousToken);
 
-        $this->loginService->expects($this->never())
-            ->method('saveLoginLog')
-        ;
-
+        // 执行测试
         $this->subscriber->onLoginSuccess($event);
+
+        // dev 防火墙不应该记录日志
+        $logs = $this->loginLogRepository->findBy(['action' => 'success']);
+        $foundLog = null;
+        foreach ($logs as $log) {
+            if ($log->getIdentifier() === 'test@example.com') {
+                $foundLog = $log;
+                break;
+            }
+        }
+        $this->assertNull($foundLog, 'Dev firewall should not log success');
     }
 
     public function testOnLoginSuccessWithSafeDevFirewall(): void
     {
-        $user = $this->createUserStub('test@example.com');
+        $user = $this->createNormalUser('test@example.com');
         $passport = $this->createPassport('test@example.com');
         $token = $this->createToken($user);
         $firewallName = 'safe_dev';
+        $authenticator = $this->createAuthenticator();
+        $request = $this->createRequest();
+        $response = null;
+        $previousToken = null;
 
-        $event = $this->createMock(LoginSuccessEvent::class);
-        $event->method('getAuthenticatedToken')->willReturn($token);
-        $event->method('getPassport')->willReturn($passport);
-        $event->method('getFirewallName')->willReturn($firewallName);
+        $event = new LoginSuccessEvent($authenticator, $passport, $token, $request, $response, $firewallName, $previousToken);
 
-        $this->loginService->expects($this->never())
-            ->method('saveLoginLog')
-        ;
-
+        // 执行测试
         $this->subscriber->onLoginSuccess($event);
+
+        // safe_dev 防火墙不应该记录日志
+        $logs = $this->loginLogRepository->findBy(['action' => 'success']);
+        $foundLog = null;
+        foreach ($logs as $log) {
+            if ($log->getIdentifier() === 'test@example.com') {
+                $foundLog = $log;
+                break;
+            }
+        }
+        $this->assertNull($foundLog, 'Safe dev firewall should not log success');
     }
 
     public function testOnLogoutWithUser(): void
     {
-        $user = $this->createUserStub('test@example.com');
+        $user = $this->createNormalUser('test@example.com');
         $token = $this->createToken($user);
+        $request = $this->createRequest();
 
-        $event = $this->createMock(LogoutEvent::class);
-        $event->method('getToken')->willReturn($token);
+        $event = new LogoutEvent($request, $token);
 
-        $this->loginService->expects($this->once())
-            ->method('saveLoginLog')
-            ->with($user, 'logout')
-        ;
-
+        // 执行测试
         $this->subscriber->onLogout($event);
+
+        // 验证登出日志已记录
+        $logs = $this->loginLogRepository->findBy(['action' => 'logout']);
+        $this->assertNotEmpty($logs);
+        $foundLog = null;
+        foreach ($logs as $log) {
+            if ($log->getIdentifier() === 'test@example.com') {
+                $foundLog = $log;
+                break;
+            }
+        }
+        $this->assertNotNull($foundLog);
+        $this->assertEquals('logout', $foundLog->getAction());
     }
 
     public function testOnLogoutWithNullToken(): void
     {
-        $event = $this->createMock(LogoutEvent::class);
-        $event->method('getToken')->willReturn(null);
+        $request = $this->createRequest();
+        $event = new LogoutEvent($request, null);
 
-        $this->loginService->expects($this->never())
-            ->method('saveLoginLog')
-        ;
-
+        // 执行测试
         $this->subscriber->onLogout($event);
+
+        // 空token不应该记录日志
+        $logs = $this->loginLogRepository->findBy(['action' => 'logout']);
+        // 只应该有之前测试产生的日志
+        $filteredLogs = array_filter($logs, function($log) {
+            return $log->getIdentifier() === null;
+        });
+        $this->assertEmpty($filteredLogs, 'Null token should not log logout');
     }
 
     public function testOnLogoutWithNullUser(): void
     {
         $token = $this->createMock(TokenInterface::class);
         $token->method('getUser')->willReturn(null);
+        $request = $this->createRequest();
 
-        $event = $this->createMock(LogoutEvent::class);
-        $event->method('getToken')->willReturn($token);
+        $event = new LogoutEvent($request, $token);
 
-        $this->loginService->expects($this->never())
-            ->method('saveLoginLog')
-        ;
-
+        // 执行测试
         $this->subscriber->onLogout($event);
+
+        // 空用户不应该记录日志
+        $logs = $this->loginLogRepository->findBy(['action' => 'logout']);
+        $filteredLogs = array_filter($logs, function($log) {
+            return $log->getIdentifier() === null;
+        });
+        $this->assertEmpty($filteredLogs, 'Null user should not log logout');
     }
 }

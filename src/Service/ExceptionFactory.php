@@ -9,7 +9,7 @@ use Tourze\LoginProtectBundle\Exception\LockedAuthenticationException;
  *
  * 用于创建异常实例，避免在测试中直接实例化
  */
-class ExceptionFactory
+final class ExceptionFactory
 {
     /**
      * 创建 LockedAuthenticationException 实例

@@ -4,7 +4,7 @@ namespace Tourze\LoginProtectBundle\DependencyInjection;
 
 use Tourze\SymfonyDependencyServiceLoader\AutoExtension;
 
-class LoginProtectExtension extends AutoExtension
+final class LoginProtectExtension extends AutoExtension
 {
     protected function getConfigDir(): string
     {

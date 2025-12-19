@@ -18,7 +18,7 @@ use Tourze\LoginProtectBundle\Service\LoginService;
  * 登录安全相关的处理
  */
 #[WithMonologChannel(channel: 'login-protect')]
-class LoginLogSubscriber
+final class LoginLogSubscriber
 {
     public function __construct(
         private readonly LoggerInterface $logger,

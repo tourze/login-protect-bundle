@@ -11,7 +11,7 @@ use Tourze\LoginProtectBundle\Entity\LoginLog;
 
 #[Autoconfigure(public: true)]
 #[WithMonologChannel(channel: 'login_protect')]
-readonly class LoginService
+final readonly class LoginService
 {
     public function __construct(
         private DoctrineService $doctrineService,
